@@ -1,0 +1,460 @@
+{
+  "name": "Save recipes",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -704,
+        0
+      ],
+      "id": "ec0ad4b9-e500-46e3-9b9e-b724a72801b5",
+      "name": "Telegram Trigger",
+      "webhookId": "80dadddf-5668-4bc2-a915-0b7e2d528d73",
+      "credentials": {
+        "telegramApi": {
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.message.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -496,
+        0
+      ],
+      "id": "33c682f2-5294-41cb-882a-70d4129e2644",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an AI agent development expert with extensive experience in designing and implementing sophisticated web scraping solutions tailored for culinary content extraction. I seek your expertise to create a robust, efficient, and scalable web scraper specifically targeted at recipe websites.\n\nPlease address the following key aspects:\n\n- Website Analysis: Identify common structures, dynamic content loading methods, and anti-scraping mechanisms prevalent in recipe websites.\n- Data Extraction: Define strategies to accurately extract recipe components such as ingredients, instructions, cooking times, nutritional information, and user reviews.\n- Technology Stack: Recommend appropriate tools, libraries, and frameworks (e.g., Scrapy, Selenium, BeautifulSoup) optimal for handling JavaScript-rendered pages and ensuring data integrity.\n- Scalability and Performance: Propose methods to manage large-scale scraping tasks while minimizing server load and avoiding IP blocking.\n- Data Cleaning and Normalization: Outline processes to standardize extracted data for consistent storage and usability.\n- Compliance: Ensure adherence to legal and ethical considerations, including respect for robots.txt and site terms of service.\n- Error Handling and Maintenance: Develop strategies for monitoring scraper performance, handling failures, and adapting to website changes.\n\nLeverage your specialized knowledge to design a comprehensive scraping solution that balances efficiency, accuracy, and compliance, facilitating high-quality recipe data acquisition.\n\n Analize en extrac the recipe information from the HTML: {{ $json.data }}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -288,
+        0
+      ],
+      "id": "73a7bdc7-9446-4ca1-bd13-3689987dd635",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"title\": {\n\t\t\t\"type\": \"string\"\n\t\t},\n\t\t\"ingredients\": {\n\t\t\t\"type\": \"array\",\n\t\t\t\"items\": {\n\t\t\t\t\"type\": \"string\"\n\t\t\t}\n\t\t},\n        \"description\": {\n\t\t\t\"type\": \"string\"\n\t\t},\n      \t\"procedure\": {\n\t\t\t\"type\": \"array\",\n\t\t\t\"items\": {\n\t\t\t\t\"type\": \"string\"\n\t\t\t}\n\t\t},\n        \"images\":{\n\t\t\t\"type\": \"array\",\n\t\t\t\"items\": {\n\t\t\t\t\"type\": \"string\"\n\t\t\t}\n\t\t},\n        \"cooking_time\": {\n\t\t\t\"type\": \"string\"\n\t\t},\n      \"preparation_time\": {\n\t\t\t\"type\": \"string\"\n\t\t}\n\t}\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -128,
+        208
+      ],
+      "id": "f89c62f9-d9d3-498a-93af-c7fedae2dd8b",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -128,
+        352
+      ],
+      "id": "090a3b38-25d0-498d-80a5-5bfbafb7ca60",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -336,
+        208
+      ],
+      "id": "36c69706-70ff-4a43-bde5-256dcdabcbe5",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "app2GyyZmUxurJTPi",
+          "mode": "list",
+          "cachedResultName": "Biblioteca Digital de Recetas",
+          "cachedResultUrl": "https://airtable.com/app2GyyZmUxurJTPi"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblXCN5XZVekui1Q6",
+          "mode": "list",
+          "cachedResultName": "Recetas",
+          "cachedResultUrl": "https://airtable.com/app2GyyZmUxurJTPi/tblXCN5XZVekui1Q6"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Tiempo Estimado de Preparación": 0,
+            "Nombre de la Receta": "={{ $json.output.title }}",
+            "Instrucciones": "={{ $json.output.procedure }}",
+            "Ingredientes": "={{ $json.output.ingredients }}",
+            "Resumen Inteligente de la Receta": "={{ $json.output.description }}",
+            "Galearia": "={{ $json.output.images }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Nombre de la Receta",
+              "displayName": "Nombre de la Receta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Instrucciones",
+              "displayName": "Instrucciones",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Ingredientes",
+              "displayName": "Ingredientes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Valores Nutricionales",
+              "displayName": "Valores Nutricionales",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Total Ingredientes",
+              "displayName": "Total Ingredientes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Lista de Ingredientes",
+              "displayName": "Lista de Ingredientes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Calorías Totales",
+              "displayName": "Calorías Totales",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Proteínas Totales (g)",
+              "displayName": "Proteínas Totales (g)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Grasas Totales (g)",
+              "displayName": "Grasas Totales (g)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Carbohidratos Totales (g)",
+              "displayName": "Carbohidratos Totales (g)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Fibra Total (g)",
+              "displayName": "Fibra Total (g)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Azúcares Totales (g)",
+              "displayName": "Azúcares Totales (g)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Sodio Total (mg)",
+              "displayName": "Sodio Total (mg)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Tiempo Estimado de Preparación",
+              "displayName": "Tiempo Estimado de Preparación",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Dificultad",
+              "displayName": "Dificultad",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Fácil",
+                  "value": "Fácil"
+                },
+                {
+                  "name": "Intermedia",
+                  "value": "Intermedia"
+                },
+                {
+                  "name": "Difícil",
+                  "value": "Difícil"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Resumen Inteligente de la Receta",
+              "displayName": "Resumen Inteligente de la Receta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Categoría de Receta (AI)",
+              "displayName": "Categoría de Receta (AI)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Galearia",
+              "displayName": "Galearia",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        112,
+        0
+      ],
+      "id": "f10b7183-8936-4c7d-b827-43bc7410801c",
+      "name": "Create a record",
+      "credentials": {
+        "airtableTokenApi": {
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Create a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "GtYeJxowUueAUVVi",
+    "timeSavedPerExecution": 1000
+  },
+  "versionId": "94ae82c2-212a-4141-9a3d-972356ad85c9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1a2a3afecee298412dc33a943cd836428d12710e4222b5a24c155bd3c4bbefd8"
+  },
+  "id": "GtYeJxowUueAUVVi",
+  "tags": []
+}
