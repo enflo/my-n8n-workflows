@@ -1,0 +1,640 @@
+{
+  "name": "N8N Automate Amzon review creation",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "92eecdcd-c937-4272-9e75-e6367428cb68",
+      "name": "When clicking Test workflow",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        -592,
+        32
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "maxTokens": 1000,
+          "responseFormat": "json_object",
+          "temperature": 0
+        }
+      },
+      "id": "92b3f0cd-dcaa-42fa-9e03-bbf4d19f8b80",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        704,
+        224
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"name\": { \n      \"type\": \"string\", \n      \"description\": \"Product name/title\" \n    },\n    \"description\": { \n      \"type\": \"string\", \n      \"description\": \"Product description or key features\" \n    },\n    \"rating\": { \n      \"type\": [\"number\", \"null\"], \n      \"description\": \"Average rating (e.g., 4.5)\" \n    },\n    \"price\": { \n      \"type\": [\"string\", \"null\"], \n      \"description\": \"Product price with currency\" \n    },\n    \"images\": { \n      \"type\": \"string\", \n      \"description\": \"Product images\" \n    },\n    \"reviews\": { \n      \"type\": \"array\", \n      \"description\": \"Product list reviews. With the format: 'rating - title - evaluation'\" \n    }\n  },\n  \"required\": [\"name\"]\n}",
+        "autoFix": true
+      },
+      "id": "dc2865c4-ed87-4487-8d92-3c1c78841f84",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "position": [
+        928,
+        192
+      ],
+      "typeVersion": 1.3
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "19Allmozbygw-QogPeq2TH9m9D57FCn4MTu3zmJukg1A",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19Allmozbygw-QogPeq2TH9m9D57FCn4MTu3zmJukg1A/edit?usp=drivesdk",
+          "cachedResultName": "Amazon Product List"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19Allmozbygw-QogPeq2TH9m9D57FCn4MTu3zmJukg1A/edit#gid=0",
+          "cachedResultName": "Sheet1"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "parsed"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f474c6a9-0104-402a-90fe-217911bb3b83",
+      "name": "1. Get Product URLs from Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -336,
+        32
+      ],
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleApi": {
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "id": "e29668ba-b064-4942-a9fb-16c1c52086ad",
+      "name": "2. Loop Through Each URL",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [
+        -112,
+        32
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "url": "=https://api.scrape.do/?token={{ token }}&url={{ encodeURIComponent($json.url) }}&geoCode=us&render=false",
+        "options": {
+          "response": {
+            "response": {}
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "ee2c7283-32ce-4e26-b435-6afdbb92b3ba",
+      "name": "3. Scrape Product Page HTML",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        336,
+        16
+      ],
+      "typeVersion": 4.2,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "productTitle",
+              "cssSelector": "#productTitle, h1[data-automation-id=\"product-title\"], .product-title"
+            },
+            {
+              "key": "price",
+              "cssSelector": ".a-price .a-offscreen, .a-price-whole, .a-price-fraction, .priceToPay .a-price .a-offscreen"
+            },
+            {
+              "key": "rating",
+              "cssSelector": ".a-icon-alt, [data-hook=\"average-star-rating\"], .a-star-medium .a-icon-alt"
+            },
+            {
+              "key": "reviewCount",
+              "cssSelector": "[data-hook=\"total-review-count\"], .a-link-normal[href*=\"customerReviews\"], #acrCustomerReviewText"
+            },
+            {
+              "key": "featureBullets",
+              "cssSelector": "#feature-bullets ul, .a-unordered-list.a-nostyle.a-vertical.feature"
+            },
+            {
+              "key": "productDescription",
+              "cssSelector": "#productDescription, [data-feature-name=\"productDescription\"], .product-description"
+            },
+            {
+              "key": "productImages",
+              "cssSelector": "#altImages"
+            },
+            {
+              "key": "reviews",
+              "cssSelector": "li[data-hook=\"review\"]",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fae370e5-d3c3-4354-9d2f-25060125a1df",
+      "name": "4. Extract Raw Data Elements",
+      "type": "n8n-nodes-base.html",
+      "position": [
+        576,
+        16
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($json, null, 2) }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Extract Amazon product data and return ONLY valid JSON.\n\nInput: {{ $json }}\n\nExtract:\n- name: product title from productTitle\n- description: create from featureBullets OR productDescription (max 150 chars, if empty use \"No description\")\n- rating: extract number from rating (e.g. \"4.5 out of 5\" → 4.5, if no rating use null)\n- reviews: Extract a list reviews list. Return the las 10 reviews. With the format for every item: \"rating - title - evaluation\"\n- price: format price from price field (add $ if missing, if no price use null)\n- images: product images from productImages\n\nReturn exact JSON:\n{\n  \"name\": \"product title here\",\n  \"description\": \"description here or No description\",\n  \"rating\": 4.5,\n  \"reviews\": [\n     \"5 - Me gusta - Me ha gustado mucho el producto\",\n     \"4 - Genial - Producto genial\",\n     \"5 - Lo volvere ha hacer - Volvere a comprar el producto\",\n  ],\n  \"price\": \"$29.99\",\n  \"images\": \"https://m.media-amazon.com/images/I/41TT23xNoWL._AC_US40_.jpg, https://m.media-amazon.com/images/I/41TT23xNoWL._AC_US41_.jpg\"\n}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "77e721c6-e800-4b98-b083-58c0c13989d4",
+      "name": "5. Clean & Structure Data with AI",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "position": [
+        816,
+        16
+      ],
+      "typeVersion": 1.7,
+      "retryOnFail": false,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "19Allmozbygw-QogPeq2TH9m9D57FCn4MTu3zmJukg1A",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19Allmozbygw-QogPeq2TH9m9D57FCn4MTu3zmJukg1A/edit?usp=drivesdk",
+          "cachedResultName": "Amazon Product List"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 838351250,
+          "mode": "list",
+          "cachedResultName": "Sheet2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19Allmozbygw-QogPeq2TH9m9D57FCn4MTu3zmJukg1A/edit#gid=838351250"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Titulo": "={{ $('5. Clean & Structure Data with AI').item.json.output.name }}",
+            "Descripción": "={{ $('5. Clean & Structure Data with AI').item.json.output.description }}",
+            "Rating": "={{ $('5. Clean & Structure Data with AI').item.json.output.rating }}",
+            "url": "={{ $('2. Loop Through Each URL').item.json.url }}",
+            "Images": "={{ $('5. Clean & Structure Data with AI').item.json.output.images }}",
+            "Precio": "={{ $('5. Clean & Structure Data with AI').item.json.output.price }}",
+            "Review": "={{ $json.output.comprehensive_review }}",
+            "My_Rating": "={{ $json.output.stars }}",
+            "Title Review": "={{ $json.output.title_review }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Titulo",
+              "displayName": "Titulo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Descripción",
+              "displayName": "Descripción",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Rating",
+              "displayName": "Rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Precio",
+              "displayName": "Precio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Images",
+              "displayName": "Images",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "My_Rating",
+              "displayName": "My_Rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Review",
+              "displayName": "Review",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Title Review",
+              "displayName": "Title Review",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "useAppend": true
+        }
+      },
+      "id": "d00e9241-3704-4ccf-a809-aa8c0822fc7b",
+      "name": "7. Save Product Data to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1680,
+        16
+      ],
+      "typeVersion": 4.7,
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleApi": {
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "19Allmozbygw-QogPeq2TH9m9D57FCn4MTu3zmJukg1A",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19Allmozbygw-QogPeq2TH9m9D57FCn4MTu3zmJukg1A/edit?usp=drivesdk",
+          "cachedResultName": "Amazon Product List"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19Allmozbygw-QogPeq2TH9m9D57FCn4MTu3zmJukg1A/edit#gid=0",
+          "cachedResultName": "Sheet1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "url": "={{ $json.url }}",
+            "parsed": "=TRUE"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "parsed",
+              "displayName": "parsed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "006ad69b-4383-45b0-bb00-491f75316182",
+      "name": "Mark URLs Parsed",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        112,
+        -128
+      ],
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleApi": {
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "=Analyze and provide me the comprehensive review and a title review for the following\n{{ $json.output.name }}\n{{ $json.output.description }}\n\nAvoid referring to other users.\n\nAlign your review with the existing reviews:\n{{ $json.output.reviews }}",
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"comprehensive_review\": {\n\t\t\t\"type\": \"string\"\n\t\t},\n        \"title_review\": {\n\t\t\t\"type\": \"string\"\n\t\t},\n        \"stars\":{\"type\": \"integer\"}\n\t}\n}",
+        "options": {}
+      },
+      "id": "dc324356-a08a-475b-9dfb-90fb709f0828",
+      "name": "Perform Review Analysis",
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "position": [
+        1232,
+        16
+      ],
+      "retryOnFail": true,
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "maxTokens": 500,
+          "responseFormat": "json_object",
+          "temperature": 0
+        }
+      },
+      "id": "c252fd58-b2be-4d64-b491-4b24055a039c",
+      "name": "OpenAI Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        928,
+        336
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "maxTokens": 500,
+          "responseFormat": "json_object",
+          "temperature": 0
+        }
+      },
+      "id": "2729d956-db7f-4d9d-91f0-77099435bd17",
+      "name": "OpenAI Chat Model2",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        1264,
+        288
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking Test workflow": {
+      "main": [
+        [
+          {
+            "node": "1. Get Product URLs from Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "5. Clean & Structure Data with AI",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "5. Clean & Structure Data with AI",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1. Get Product URLs from Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "2. Loop Through Each URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Loop Through Each URL": {
+      "main": [
+        [
+          {
+            "node": "Mark URLs Parsed",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "3. Scrape Product Page HTML",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "2. Loop Through Each URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Scrape Product Page HTML": {
+      "main": [
+        [
+          {
+            "node": "4. Extract Raw Data Elements",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Extract Raw Data Elements": {
+      "main": [
+        [
+          {
+            "node": "5. Clean & Structure Data with AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5. Clean & Structure Data with AI": {
+      "main": [
+        [
+          {
+            "node": "Perform Review Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Perform Review Analysis": {
+      "main": [
+        [
+          {
+            "node": "7. Save Product Data to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Perform Review Analysis",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f071cd74-24f3-4d1b-b5b3-e74007b7b9e5",
+  "meta": {
+    "instanceId": "1a2a3afecee298412dc33a943cd836428d12710e4222b5a24c155bd3c4bbefd8"
+  },
+  "id": "F5GPM0EclnqYMLSE",
+  "tags": []
+}
